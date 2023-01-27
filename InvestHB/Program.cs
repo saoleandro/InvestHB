@@ -4,6 +4,9 @@ using InvestHB.Domain.Commands;
 using InvestHB.Domain.Commands.Handler;
 using InvestHB.Domain.Interfaces.Repository;
 using InvestHB.Domain.Interfaces.Services;
+using InvestHB.Domain.Models;
+using InvestHB.Domain.Queries;
+using InvestHB.Domain.Queries.Handler;
 using InvestHB.Domain.Services;
 using InvestHB.Extensions;
 using InvestHB.Middlewares;
@@ -45,14 +48,20 @@ try
         .AddTransient<IInstrumentInfoRepository, InstrumentInfoRepository>()
         .AddTransient<IOrderRepository, OrderRepository>()
         .AddTransient<IOrderService, OrderService>()
+        .AddTransient<IInstrumentInfoService, InstrumentInfoService>()
         .AddMediatR(Assembly.GetExecutingAssembly());
 
+    //AutoMapper
     builder.Services.AddAutoMapper(typeof(OrderMapperProfile));
 
+    //Command
     builder.Services.AddScoped<IRequestHandler<CreateOrderCommand, Tuple<ValidationResult, int>>, OrderCommandHandler>();
     builder.Services.AddScoped<IRequestHandler<UpdateOrderCommand, Tuple<ValidationResult, int>>, OrderCommandHandler>();
     builder.Services.AddScoped<IRequestHandler<DeleteOrderCommand, Tuple<ValidationResult, int>>, OrderCommandHandler>();
 
+    //Qurey
+    builder.Services.AddScoped<IRequestHandler<GetOrderQuery, List<Order>>, OrderQueryHandler>();
+    builder.Services.AddScoped<IRequestHandler<GetInstrumentInfoQuery, InstrumentInfo?>, InstrumentInfoQueryHandler>();
 
     var app = builder.Build();
 

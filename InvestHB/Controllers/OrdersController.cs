@@ -11,19 +11,16 @@ namespace InvestHB.Controllers
     [ApiController]
     public class OrdersController : Controller
     {
-        private readonly IInstrumentInfoRepository _instrumentInfoRepository;
-        private readonly IOrderRepository _orderRepository;
         private readonly IOrderService _orderService;
+        private readonly IInstrumentInfoService _instrumentInfoService;
         private readonly ILogger<OrdersController> _logger;
 
         public OrdersController(
-            IInstrumentInfoRepository instrumentInfoRepository,
-            IOrderRepository orderRepository,
+            IInstrumentInfoService instrumentInfoService,
             IOrderService orderService,
             ILogger<OrdersController> logger)
         {
-            _instrumentInfoRepository = instrumentInfoRepository;
-            _orderRepository = orderRepository;
+            _instrumentInfoService = instrumentInfoService;
             _orderService = orderService;
             _logger = logger;
         }
@@ -36,7 +33,7 @@ namespace InvestHB.Controllers
             {
                 _logger.LogInformation($"Enviando ordem de compra. UserId: {request.UserId} | Symbol {request.Symbol}", "OrdersController | Add");
 
-                var instrumentInfo = await _instrumentInfoRepository.Get(request.Symbol);
+                var instrumentInfo = await _instrumentInfoService.GetBySymbol(request.Symbol);
 
                 if (instrumentInfo != null && (request.Quantity % instrumentInfo.LotStep != 0 ||
                    request.Quantity < instrumentInfo.MinLot ||
@@ -108,7 +105,7 @@ namespace InvestHB.Controllers
             try
             {
                 _logger.LogInformation($"Enviando solicitação de Consultar orders do UserId: {userId}", "OrdersController | Get");
-                var orders = await _orderRepository.Get(userId);
+                var orders = await _orderService.GetOrders(userId);
                 return Ok(orders);
             }
             catch (Exception ex)

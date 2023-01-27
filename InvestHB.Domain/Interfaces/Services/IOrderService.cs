@@ -10,5 +10,6 @@ namespace InvestHB.Domain.Interfaces.Services
         Task<Tuple<ValidationResult, int>> Update(OrderUpdateRequest request);
         Task<Tuple<ValidationResult, DeleteOrderStatus>> Delete(DeleteOrderRequest request);
         Task<List<string>> AsCSV(OrderRequest request);
+        Task<List<Order>> GetOrders(int userId);
     }
 }

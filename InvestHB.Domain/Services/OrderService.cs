@@ -3,6 +3,7 @@ using FluentValidation.Results;
 using InvestHB.Domain.Commands;
 using InvestHB.Domain.Interfaces.Services;
 using InvestHB.Domain.Models;
+using InvestHB.Domain.Queries;
 using MediatR;
 
 namespace InvestHB.Domain.Services
@@ -22,6 +23,11 @@ namespace InvestHB.Domain.Services
         public Task<List<string>> AsCSV(OrderRequest request)
         {
             throw new NotImplementedException();
+        }
+
+        public async Task<List<Order>> GetOrders(int userId)
+        {
+            return await _mediator.Send(new GetOrderQuery(userId));
         }
 
         public async Task<Tuple<ValidationResult, int>> Create(OrderRequest request)
