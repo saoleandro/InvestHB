@@ -1,9 +1,7 @@
-﻿using InvestHB.Domain.Commands;
-using InvestHB.Domain.Interfaces.Repository;
+﻿using InvestHB.Domain.Interfaces.Repository;
 using Microsoft.AspNetCore.Mvc;
 using MediatR;
 using InvestHB.Domain.Models;
-using System.Runtime.CompilerServices;
 using InvestHB.Domain.Interfaces.Services;
 using FluentValidation.Results;
 
@@ -16,18 +14,18 @@ namespace InvestHB.Controllers
         private readonly IInstrumentInfoRepository _instrumentInfoRepository;
         private readonly IOrderRepository _orderRepository;
         private readonly IOrderService _orderService;
-        private readonly IMediator _mediator;
+        private readonly ILogger<OrdersController> _logger;
 
         public OrdersController(
             IInstrumentInfoRepository instrumentInfoRepository,
             IOrderRepository orderRepository,
             IOrderService orderService,
-            IMediator mediator)
+            ILogger<OrdersController> logger)
         {
             _instrumentInfoRepository = instrumentInfoRepository;
             _orderRepository = orderRepository;
             _orderService = orderService;
-            _mediator = mediator;
+            _logger = logger;
         }
 
         [HttpPost]
@@ -36,29 +34,39 @@ namespace InvestHB.Controllers
         {
             try
             {
+                _logger.LogInformation($"Enviando ordem de compra. UserId: {request.UserId} | Symbol {request.Symbol}", "OrdersController | Add");
+
                 var instrumentInfo = await _instrumentInfoRepository.Get(request.Symbol);
 
                 if (instrumentInfo != null && (request.Quantity % instrumentInfo.LotStep != 0 ||
                    request.Quantity < instrumentInfo.MinLot ||
                    request.Quantity > instrumentInfo.MaxLot))
+                {
+                    _logger.LogWarning($"Quantidade inválida para o lote do ativo. Lote Min.: {instrumentInfo.MinLot} - Lote Max.:{instrumentInfo.MaxLot}", "OrdersController | Add");
                     return BadRequest("Quantidade inválida.");
+                }
 
 
                 var resultValidation = await _orderService.Create(request);
 
                 var errors = Validate(resultValidation.Item1);
 
-                if(errors != null)
+                if (errors != null)
+                {
+                    _logger.LogError($"{string.Join(@"|", errors.ToArray())}", "Enviar alocação", "OrdersController | Add");
+
                     return BadRequest(new ValidationProblemDetails(new Dictionary<string, string[]>
                     {
                         { "Messages", errors.ToArray() }
                     }));
+                }
                
 
                 return Ok(resultValidation.Item2);
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, $"Error: {ex.Message}", "Exception", "OrdersController | Add");
                 return BadRequest(ex.Message);
             }
         }
@@ -69,20 +77,26 @@ namespace InvestHB.Controllers
         {
             try
             {
+                _logger.LogInformation($"Enviando solicitação de excluir a ordem. UserId: {request.UserId} | OrderId {request.OrderId}", "OrdersController | delete");
+
                 var resultValidation = await _orderService.Delete(request);
                 var errors = Validate(resultValidation.Item1);
 
                 if (errors != null)
+                {
+                    _logger.LogError($"{string.Join(@"|", errors.ToArray())}", "Enviar alocação", "OrdersController | Delete");
+
                     return BadRequest(new ValidationProblemDetails(new Dictionary<string, string[]>
                     {
                         { "Messages", errors.ToArray() }
                     }));
-
+                }
 
                 return Ok(resultValidation.Item2);
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, $"Error: {ex.Message}", "Exception", "OrdersController | Delete");
                 return BadRequest(ex.Message);
             }
         }
@@ -93,11 +107,13 @@ namespace InvestHB.Controllers
         {
             try
             {
+                _logger.LogInformation($"Enviando solicitação de Consultar orders do UserId: {userId}", "OrdersController | Get");
                 var orders = await _orderRepository.Get(userId);
                 return Ok(orders);
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, $"Error: {ex.Message}", "Exception", "OrdersController | Get");
                 return BadRequest(ex.Message);
             }
         }
@@ -108,10 +124,12 @@ namespace InvestHB.Controllers
         {
             try
             {
+                _logger.LogInformation($"Enviando solicitação gerar CSV - UserId: {request.UserId} | Symbol: {request.Symbol}", "OrdersController | GetAsCSV");
                 return Ok(await _orderService.AsCSV(request));
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, $"Error: {ex.Message}", "Exception", "OrdersController | GetAsCSV");
                 return BadRequest(ex.Message);
             }
         }

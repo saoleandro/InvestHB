@@ -9,10 +9,12 @@ namespace InvestHB.Controllers
     public class InstrumentController : Controller
     {
         private readonly IInstrumentInfoRepository _instrumentInfoRepository;
+        private readonly ILogger<InstrumentController> _logger;
 
-        public InstrumentController(IInstrumentInfoRepository instrumentInfoRepository)
+        public InstrumentController(IInstrumentInfoRepository instrumentInfoRepository, ILogger<InstrumentController> logger)
         {
             _instrumentInfoRepository = instrumentInfoRepository;
+            _logger = logger;
         }
 
         [HttpGet]
@@ -21,10 +23,14 @@ namespace InvestHB.Controllers
         {
             try
             {
+                _logger.LogInformation($"Consultando pelo ativo {symbol}", "InstrumentController");
+
                 return Ok(await _instrumentInfoRepository.Get(symbol));
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, $"Error: {ex.Message}", "InstrumentController");
+
                 return BadRequest(ex.Message);
             }
         }
