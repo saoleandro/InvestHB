@@ -1,4 +1,4 @@
-# C# /.NET Job Test
+# C# /.NET Job Test - Código Refeito para funcionar
 
 Refeito o código de teste de uma entrevista, no qual o código tinha:
 **- 2 design Patterns misturado, sendo parte do CQRS e parte de TDD
